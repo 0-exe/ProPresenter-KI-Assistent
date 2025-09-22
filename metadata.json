@@ -1,0 +1,5 @@
+{
+  "name": "ProPresenter Playlist Generator",
+  "description": "An AI-powered tool to automatically generate ProPresenter playlists from a church service schedule. Upload your schedule, and the app will extract songs and scriptures, fetch their content, and create a formatted text file ready for import into ProPresenter.",
+  "requestFramePermissions": []
+}
