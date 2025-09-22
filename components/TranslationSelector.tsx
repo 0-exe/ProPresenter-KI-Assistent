@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-const BIBLE_TRANSLATIONS = ["Lutherbibel 2017", "Elberfelder Bibel", "Hoffnung für Alle", "New International Version (NIV)", "King James Version (KJV)", "English Standard Version (ESV)"];
+const BIBLE_TRANSLATIONS = ["Lutherbibel 2017", "Elberfelder Bibel", "Hoffnung für Alle", "BasisBibel", "New International Version (NIV)", "King James Version (KJV)", "English Standard Version (ESV)"];
 
 interface TranslationSelectorProps {
   selectedTranslation: string;

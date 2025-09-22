@@ -9,15 +9,15 @@ import Loader from './components/Loader';
 
 const TutorialSection: React.FC = () => (
     <div className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-4 mt-8">
-        <h3 className="text-xl font-bold text-slate-100">Anleitung zum Import in ProPresenter</h3>
+        <h3 className="text-xl font-bold text-slate-100">Anleitung zum Import in ProPresenter 7</h3>
         <ol className="list-decimal list-inside space-y-3 text-slate-300">
             <li>Laden Sie die <strong>.zip-Datei</strong> über den Download-Button herunter.</li>
-            <li><strong>Entpacken Sie die .zip-Datei.</strong> Sie erhalten einen Ordner mit einer <strong>.pro6plx-Playlistdatei</strong> und mehreren <strong>.pro6-Präsentationsdateien</strong>.</li>
-            <li>Öffnen Sie ProPresenter.</li>
-            <li>Ziehen Sie die <strong>.pro6plx-Datei</strong> (nicht die einzelnen .pro6-Dateien) per Drag &amp; Drop in den Playlist-Bereich von ProPresenter.</li>
-            <li>Stellen Sie sicher, dass sich alle .pro6-Dateien im selben Ordner wie die .pro6plx-Datei befinden, wenn Sie sie importieren.</li>
+            <li><strong>Entpacken Sie die .zip-Datei.</strong> Sie erhalten einen Ordner mit einer <strong>.proplaylist-Datei</strong> und mehreren <strong>.pro-Präsentationsdateien</strong>.</li>
+            <li>Öffnen Sie ProPresenter 7.</li>
+            <li>Ziehen Sie die <strong>.proplaylist-Datei</strong> per Drag &amp; Drop in den Playlist-Bereich von ProPresenter.</li>
+            <li>Stellen Sie sicher, dass sich alle .pro-Dateien im selben Ordner wie die .proplaylist-Datei befinden, wenn Sie sie importieren.</li>
             <li className='!mt-4 text-sky-300 bg-sky-900/50 p-3 rounded-md border border-sky-800'>
-                <strong>Ergebnis:</strong> Eine vollständige ProPresenter-Playlist wird importiert. Jeder Song und Schrifttext ist eine <strong>eigene Präsentation</strong>, und andere Ablaufpunkte (wie "Predigt") erscheinen als <strong>Überschriften</strong> in der Playlist.
+                <strong>Ergebnis:</strong> Eine vollständige ProPresenter 7-Playlist wird importiert. Jeder Song und Schrifttext ist eine <strong>eigene Präsentation</strong>, und andere Ablaufpunkte (wie "Predigt") erscheinen als <strong>Überschriften</strong> in der Playlist.
             </li>
         </ol>
     </div>
@@ -76,14 +76,32 @@ const App: React.FC = () => {
     setPlaylist([]);
 
     try {
-      setLoadingMessage("Bild wird für die Analyse vorbereitet...");
-      const base64Image = await fileUtils.fileToBase64(file);
+      setLoadingMessage("Datei wird für die Analyse vorbereitet...");
+      
+      let scheduleContent: { type: 'image' | 'text', data: string, mimeType?: string };
+
+      if (file.type.startsWith('image/')) {
+        const base64Image = await fileUtils.fileToBase64(file);
+        scheduleContent = { type: 'image', data: base64Image, mimeType: file.type };
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'text/plain'
+      ) {
+        const textContent = await fileUtils.extractTextFromFile(file);
+        if (!textContent || !textContent.trim()) {
+          throw new Error("Das Dokument scheint leer zu sein oder konnte nicht gelesen werden.");
+        }
+        scheduleContent = { type: 'text', data: textContent };
+      } else {
+        throw new Error(`Nicht unterstützter Dateityp: ${file.type}. Bitte laden Sie ein Bild, eine DOCX- oder eine TXT-Datei hoch.`);
+      }
+
 
       setLoadingMessage("Gottesdienstplan wird analysiert...");
-      const parsedItems = await geminiService.parseSchedule(base64Image, file.type);
+      const parsedItems = await geminiService.parseSchedule(scheduleContent);
       
       if (!parsedItems || parsedItems.length === 0) {
-        throw new Error("Es konnten keine Einträge im Plan gefunden werden. Bitte versuchen Sie es mit einem deutlicheren Bild.");
+        throw new Error("Es konnten keine Einträge im Plan gefunden werden. Bitte versuchen Sie es mit einer anderen Datei.");
       }
 
       const initialPlaylist: PlaylistItem[] = parsedItems.map(item => ({
@@ -150,7 +168,7 @@ const App: React.FC = () => {
             <div className="bg-slate-800 p-6 rounded-xl shadow-2xl border border-slate-700 space-y-6">
                 <div>
                     <h2 className="text-xl font-bold text-slate-100 mb-1">1. Ablaufplan hochladen</h2>
-                    <p className="text-sm text-slate-400 mb-4">Laden Sie ein Bild Ihres Gottesdienstablaufplans hoch.</p>
+                    <p className="text-sm text-slate-400 mb-4">Laden Sie eine Bild-, DOCX- oder TXT-Datei Ihres Gottesdienstablaufplans hoch.</p>
                     <FileUpload onFileSelect={handleFileSelect} disabled={isLoading} />
                 </div>
                  <div>
@@ -204,7 +222,7 @@ const App: React.FC = () => {
                       <span>Playlist wird erstellt...</span>
                     </>
                   ) : (
-                    'ProPresenter-Playlist (.zip) herunterladen'
+                    'ProPresenter 7-Playlist (.zip) herunterladen'
                   )}
                 </button>
               </div>
